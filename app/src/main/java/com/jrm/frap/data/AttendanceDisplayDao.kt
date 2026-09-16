@@ -4,23 +4,14 @@ import androidx.room.Dao
 import androidx.room.Query
 
 data class AttendanceDisplayRow(
-
     val attendanceId: Int,
-
     val workerId: Int,
-
     val firstName: String,
-
     val middleName: String?,
-
     val lastName: String,
-
     val suffix: String?,
-
     val designationId: Int?,
-
     val designationName: String?,
-
     val timeIn: String
 )
 
@@ -31,16 +22,15 @@ interface AttendanceDisplayDao {
         SELECT
             a.id AS attendanceId,
             a.workerId AS workerId,
-
             w.firstName AS firstName,
             w.middleName AS middleName,
             w.lastName AS lastName,
             w.suffix AS suffix,
-
             s.designationId AS designationId,
-
-            d.designationType AS designationName,
-
+            COALESCE(
+                d.designationType,
+                'No Schedule'
+            ) AS designationName,
             a.timeIn AS timeIn
 
         FROM attendance a
@@ -56,6 +46,7 @@ interface AttendanceDisplayDao {
             ON d.id = s.designationId
 
         WHERE a.attendanceDate = :date
+        AND a.isDeleted = 0
 
         ORDER BY a.timeIn DESC
     """)

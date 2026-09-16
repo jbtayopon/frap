@@ -20,23 +20,20 @@ import androidx.room.PrimaryKey
     ]
 )
 data class AttendanceEntity(
-
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-
     val workerId: Int,
-
     val attendanceDate: String,
-
     val timeIn: String,
-
     val method: String = "mobile",
-
     val syncStatus: String = "pending",
-
     val serverId: Int? = null,
-
     val eventUuid: String,
+    val createdAt: String,
 
-    val createdAt: String
+    // 0 = normal, 1 = marked for deletion
+    val isDeleted: Boolean = false,
+
+    // Set when this attendance is marked for deletion
+    val deletedAt: String? = null
 )

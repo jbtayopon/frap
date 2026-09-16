@@ -21,11 +21,8 @@ object AutoSyncManager {
     private var started = false
 
     private lateinit var context: Context
-
     private lateinit var database: AppDatabase
-
-    private lateinit var connectivityManager:
-            ConnectivityManager
+    private lateinit var connectivityManager: ConnectivityManager
 
     private val scope =
         CoroutineScope(
@@ -52,11 +49,8 @@ object AutoSyncManager {
 
         started = true
 
-        context =
-            appContext.applicationContext
-
-        database =
-            appDatabase
+        context = appContext.applicationContext
+        database = appDatabase
 
         connectivityManager =
             context.getSystemService(
@@ -110,7 +104,7 @@ object AutoSyncManager {
 
                 Log.d(
                     "FRAP_AUTO_SYNC",
-                    "Internet available. Starting sync."
+                    "Network available. Checking PC/ngrok."
                 )
 
                 triggerSync(
@@ -157,12 +151,9 @@ object AutoSyncManager {
                     )
 
                 val serverUrl =
-                    settingsRepository
-                        .getServerUrl()
+                    settingsRepository.getServerUrl()
 
-                if (
-                    serverUrl.isNullOrBlank()
-                ) {
+                if (serverUrl.isNullOrBlank()) {
 
                     Log.d(
                         "FRAP_AUTO_SYNC",
@@ -174,20 +165,15 @@ object AutoSyncManager {
 
                 Log.d(
                     "FRAP_AUTO_SYNC",
-                    "Sync started. reason=$reason"
+                    "Checking PC/ngrok before sync. reason=$reason"
                 )
 
                 val result =
-                    SyncRepository(
-                        database
-                    ).sync(
-                        serverUrl
-                    )
+                    SyncRepository(database).sync(serverUrl)
 
                 if (result.isSuccess) {
 
-                    val data =
-                        result.getOrThrow()
+                    val data = result.getOrThrow()
 
                     Log.d(
                         "FRAP_AUTO_SYNC",
@@ -203,10 +189,8 @@ object AutoSyncManager {
 
                     Log.w(
                         "FRAP_AUTO_SYNC",
-                        "SYNC FAILED: " +
-                                result
-                                    .exceptionOrNull()
-                                    ?.message
+                        "SYNC SKIPPED/FAILED: " +
+                                result.exceptionOrNull()?.message
                     )
                 }
 

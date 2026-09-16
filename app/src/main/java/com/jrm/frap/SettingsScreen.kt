@@ -46,6 +46,7 @@ import com.jrm.frap.data.AppDatabase
 import com.jrm.frap.data.AppSettingsRepository
 import com.jrm.frap.data.DesignationOption
 import com.jrm.frap.data.DesignationTimeEntity
+import com.jrm.frap.data.SecurityRepository
 
 import kotlinx.coroutines.launch
 
@@ -86,6 +87,33 @@ fun SettingsScreen(
                 database.appSettingsDao()
             )
         }
+
+
+    // ======================================================
+    // SECURITY REPOSITORY
+    // ======================================================
+
+    val securityRepository =
+        remember {
+            SecurityRepository(context)
+        }
+
+
+    var hasAdminPassword by remember {
+        mutableStateOf(false)
+    }
+
+    var adminPassword by remember {
+        mutableStateOf("")
+    }
+
+    var confirmAdminPassword by remember {
+        mutableStateOf("")
+    }
+
+    var isSavingPassword by remember {
+        mutableStateOf(false)
+    }
 
 
     // ======================================================
@@ -157,6 +185,10 @@ fun SettingsScreen(
             noScheduleTime =
                 settingsRepository
                     .getNoScheduleTime()
+
+            hasAdminPassword =
+                securityRepository
+                    .hasAdminPassword()
 
 
             designations =
@@ -251,6 +283,17 @@ fun SettingsScreen(
                 selected = selectedTab == 1,
                 onClick = {
                     selectedTab = 1
+                },
+                modifier =
+                    Modifier.weight(1f)
+            )
+
+
+            SettingsTabButton(
+                title = "SECURITY",
+                selected = selectedTab == 2,
+                onClick = {
+                    selectedTab = 2
                 },
                 modifier =
                     Modifier.weight(1f)
@@ -461,6 +504,93 @@ fun SettingsScreen(
                                 } finally {
 
                                     isSaving = false
+                                }
+                            }
+                        }
+                    )
+                }
+
+                // ==========================================
+                // SECURITY
+                // ==========================================
+
+                2 -> {
+
+                    SecuritySettings(
+                        hasAdminPassword = hasAdminPassword,
+                        password = adminPassword,
+                        confirmPassword = confirmAdminPassword,
+                        isSaving = isSavingPassword,
+
+                        onPasswordChange = {
+                            adminPassword = it
+                        },
+
+                        onConfirmPasswordChange = {
+                            confirmAdminPassword = it
+                        },
+
+                        onSave = {
+
+                            if (adminPassword.length < 6) {
+
+                                Toast.makeText(
+                                    context,
+                                    "Password must be at least 6 characters.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                            } else if (
+                                adminPassword != confirmAdminPassword
+                            ) {
+
+                                Toast.makeText(
+                                    context,
+                                    "Passwords do not match.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                            } else {
+
+                                isSavingPassword = true
+
+                                scope.launch {
+
+                                    try {
+
+                                        securityRepository
+                                            .setAdminPassword(
+                                                adminPassword
+                                            )
+
+                                        hasAdminPassword = true
+                                        adminPassword = ""
+                                        confirmAdminPassword = ""
+
+                                        Toast.makeText(
+                                            context,
+                                            if (hasAdminPassword)
+                                                "Admin password saved."
+                                            else
+                                                "Admin password created.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                    } catch (exception: Exception) {
+
+                                        Toast.makeText(
+                                            context,
+                                            exception.message
+                                                ?: "Unable to save admin password.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                        exception.printStackTrace()
+
+                                    } finally {
+
+                                        isSavingPassword = false
+                                    }
                                 }
                             }
                         }
@@ -901,6 +1031,129 @@ private fun DesignationTimeSettings(
                 else
                     "SAVE DESIGNATION TIMES"
             )
+        }
+    }
+}
+
+
+// ==========================================================
+// SECURITY SETTINGS
+// ==========================================================
+
+@Composable
+private fun SecuritySettings(
+
+    hasAdminPassword: Boolean,
+
+    password: String,
+
+    confirmPassword: String,
+
+    isSaving: Boolean,
+
+    onPasswordChange: (String) -> Unit,
+
+    onConfirmPasswordChange: (String) -> Unit,
+
+    onSave: () -> Unit
+
+) {
+
+    LazyColumn(
+        modifier =
+            Modifier.fillMaxSize()
+    ) {
+
+        item {
+
+            Text(
+                text = "ADMIN SECURITY",
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(8.dp)
+            )
+
+            Text(
+                text =
+                    if (hasAdminPassword)
+                        "Admin password is configured."
+                    else
+                        "No admin password configured."
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(20.dp)
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = onPasswordChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text(
+                        if (hasAdminPassword)
+                            "New Admin Password"
+                        else
+                            "Admin Password"
+                    )
+                },
+                singleLine = true,
+                visualTransformation =
+                    androidx.compose.ui.text.input.PasswordVisualTransformation()
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(12.dp)
+            )
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = onConfirmPasswordChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Confirm Password")
+                },
+                singleLine = true,
+                visualTransformation =
+                    androidx.compose.ui.text.input.PasswordVisualTransformation()
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(8.dp)
+            )
+
+            Text(
+                text = "Minimum 6 characters."
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(20.dp)
+            )
+
+            Button(
+                onClick = onSave,
+                modifier =
+                    Modifier.fillMaxWidth(),
+                enabled =
+                    !isSaving
+            ) {
+
+                Text(
+                    if (isSaving)
+                        "SAVING..."
+                    else if (hasAdminPassword)
+                        "CHANGE ADMIN PASSWORD"
+                    else
+                        "CREATE ADMIN PASSWORD"
+                )
+            }
         }
     }
 }

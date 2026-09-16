@@ -29,4 +29,29 @@ interface ApiService {
     suspend fun syncAttendance(
         @Body request: AttendanceSyncRequest
     ): Response<AttendanceSyncResponse>
+
+    // ======================================================
+    // PHONE → PC : ATTENDANCE DELETION
+    // ======================================================
+
+    @POST("api/mobile/attendance/delete")
+    suspend fun deleteAttendance(
+        @Body request: AttendanceDeleteRequest
+    ): Response<AttendanceDeleteResponse>
 }
+
+
+// ==========================================================
+// ATTENDANCE DELETE REQUEST / RESPONSE
+// ==========================================================
+
+data class AttendanceDeleteRequest(
+    val serverId: Int,
+    val eventUuid: String
+)
+
+data class AttendanceDeleteResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val error: String? = null
+)
